@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2017-2020, ARM Limited and Contributors. All rights reserved.
  * Copyright 2020 NXP
- *
+ *Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 

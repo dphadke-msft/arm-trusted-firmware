@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
+ * Copyright (C) 20122 Nuvoton Ltd.
  *
- * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <arch.h>

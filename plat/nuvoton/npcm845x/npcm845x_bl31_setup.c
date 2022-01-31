@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
- *
+ *	Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -11,7 +11,7 @@
 #include <common/bl_common.h>
 #include <common/debug.h>
 #include <drivers/console.h>
-#include <mcr_trustzone.h>
+#include <npcm845x_trustzone.h>
 #include <lib/debugfs.h>
 #include <lib/extensions/ras.h>
 #include <lib/mmio.h>
@@ -23,8 +23,8 @@
 #include <common/bl_common.h>
 
 #include <nuvoton_uart_16550.h>
-#include <npcm845x_pads.h>
-#include <npcm845x_iomux.h>
+//#include <npcm845x_pads.h>
+//#include <npcm845x_iomux.h>
 #include <npcm845x_lpuart.h>
 #include <npcm845x_clock.h>
 #include <npcm845x_gcr.h>
@@ -49,8 +49,9 @@ static entry_point_info_t bl33_image_ep_info;
 #define MAP_BL31_TOTAL		MAP_REGION_FLAT(			\
 					BL31_START,			\
 					BL31_END - BL31_START,		\
-					MT_MEMORY | MT_RW | MT_SECURE)
+					MT_MEMORY | MT_RW | EL3_PAS)
 #if RECLAIM_INIT_CODE
+Not Compiled
 IMPORT_SYM(unsigned long, __INIT_CODE_START__, BL_INIT_CODE_BASE);
 IMPORT_SYM(unsigned long, __INIT_CODE_END__, BL_CODE_END_UNALIGNED);
 
@@ -69,7 +70,7 @@ IMPORT_SYM(unsigned long, __INIT_CODE_END__, BL_CODE_END_UNALIGNED);
 					BL31_NOBITS_BASE,		\
 					BL31_NOBITS_LIMIT 		\
 						- BL31_NOBITS_BASE,	\
-					MT_MEMORY | MT_RW | MT_SECURE)
+					MT_MEMORY | MT_RW | EL3_PAS)
 
 #endif
 /*******************************************************************************
@@ -95,7 +96,15 @@ struct entry_point_info *bl31_plat_get_next_image_ep_info(uint32_t type)
 		return NULL;
 }
 
-
+int board_clocks_init()
+{
+	
+	if (arbel_clk_if_init() != 0)
+		return -1;
+	
+	return 0;
+	
+}
 int board_uart_init(void)
 {
 	unsigned long UART_BASE_ADDR;
@@ -103,9 +112,9 @@ int board_uart_init(void)
 	
 #ifdef CONFIG_TARGET_ARBEL_PALLADIUM
 	UART_Init(UART0_DEV, UART_MUX_MODE1_HSP1_SI2____HSP2_UART2__UART1_s_HSP1__UART3_s_SI2, UART_BAUDRATE_115200);
-	UART_BASE_ADDR = npcm850_get_base_uart(UART0_DEV);
+	UART_BASE_ADDR = npcm845x_get_base_uart(UART0_DEV);
 #else
-   UART_BASE_ADDR = npcm850_get_base_uart(UART0_DEV);
+   UART_BASE_ADDR = npcm845x_get_base_uart(UART0_DEV);
 
 // Hila: To Do check flag options, or modify UART init 
 #define INITIALIZE_UART_BY_BOOTBLOCK
@@ -163,6 +172,10 @@ unsigned int plat_get_syscnt_freq2(void)
 	// Do Specific Board/Chip initializations
 	
 	board_uart_init();
+	
+	board_clocks_init();
+	
+	
 	/*
 	 * Initialize Interconnect for this cluster during cold boot.
 	 * No need for locks as no other CPU is active.
@@ -288,27 +301,14 @@ unsigned int plat_get_syscnt_freq2(void)
 #endif /* RESET_TO_BL31 */
 
 }
-#ifdef DEBUG_MMU_OFF
- void bl31_plat_enable_mmu(uint32_t flags)
+static void npcm845x_security_setup(void)
 {
-	
-	
-}
-#endif
-static void bl31_security_setup(void)
-{
-
 
 	//TZ windows is from 0xFFFD0000 - FFFCFFFF
-
-	
 	tz_enable_win(MCR_RAM2_AREA4_INDEX, true);
 	tz_enable_win(MCR_RAM2_AREA5_INDEX, true);
 	tz_enable_win(MCR_RAM2_AREA6_INDEX, true);
 	tz_enable_win(MCR_RAM2_AREA7_INDEX, true);
-
-	
-	//tz_enable_win(MCR_RAM2_AREA3_INDEX, true);
 }
 /*******************************************************************************
  * Perform any BL31 platform setup common to ARM standard platforms
@@ -325,7 +325,7 @@ void bl31_platform_setup(void)
 	 * (if earlier BL has not already done so).
 	 */
 	//plat_arm_security_setup();
-	bl31_security_setup();
+	npcm845x_security_setup();
 
 #if defined(PLAT_ARM_MEM_PROT_ADDR)
 	arm_nor_psci_do_dyn_mem_protect();
@@ -334,7 +334,7 @@ void bl31_platform_setup(void)
 	
 	// In this soluction, we also do teh security initialzation even when BL31 is not in reset vector
 	// TBD for Arbel Z1
-	bl31_security_setup();
+	npcm845x_security_setup();
 #endif /* RESET_TO_BL31 */
 	
 	/* Enable and initialize the System level generic timer */
@@ -369,7 +369,7 @@ void plat_arm_program_trusted_mailbox(uintptr_t address){
 
 void __init bl31_plat_arch_setup(void)
 {
-	arm_bl31_plat_arch_setup();
+	npcm845x_bl31_plat_arch_setup();
 }
 
 
@@ -377,4 +377,36 @@ void __init plat_arm_pwrc_setup(void)
 {
 
 	//NPCM850 is always powered so no need for power control
+}
+void __init npcm845x_bl31_plat_arch_setup(void)
+{
+	const mmap_region_t bl_regions[] = {
+		MAP_BL31_TOTAL,
+#if RECLAIM_INIT_CODE
+Hila: Not compiled 
+		MAP_BL_INIT_CODE,
+#endif
+#if SEPARATE_NOBITS_REGION
+Hila: Not compiled 
+		MAP_BL31_NOBITS,
+#endif
+		ARM_MAP_BL_RO,
+#if USE_ROMLIB
+Hila: Not compiled 
+		ARM_MAP_ROMLIB_CODE,
+		ARM_MAP_ROMLIB_DATA,
+#endif
+#if USE_COHERENT_MEM
+		ARM_MAP_BL_COHERENT_RAM,
+#endif
+		ARM_MAP_SHARED_RAM,
+#ifdef SECONDARY_BRINGUP
+		ARM_MAP_NS_DRAM1,
+		ARM_MAP_BL32_CORE_MEM
+#endif
+		{0}
+	};
+	setup_page_tables(bl_regions, plat_arm_get_mmap());
+	enable_mmu_el3(0);
+
 }

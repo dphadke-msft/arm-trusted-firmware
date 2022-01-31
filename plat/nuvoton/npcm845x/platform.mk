@@ -1,13 +1,16 @@
 #
-# Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved. ...
-#
+# Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
+# Copyright (c) 2017 Nuvoton Technology Corp.
 # SPDX-License-Identifier: BSD-3-Clause
 #
-#plat/nuvoton/npcm845x/npcm845x_bl31_setup.c	
 
-SECONDARY_BRINGUP	:=	1
+#This is a debug flag for bring-up. It allows reducing CPU numbers 
+#SECONDARY_BRINGUP	:=	1
 RESET_TO_BL31		:=	1
 PMD_SPM_AT_SEL2		:= 0
+#temporaru until the RAM size is reduced 
+USE_COHERENT_MEM	:=	1
+
 
 $(eval $(call add_define,RESET_TO_BL31))
 
@@ -159,7 +162,8 @@ endif
 
 PLAT_INCLUDES		:=	-Iplat/nuvoton/npcm845x/include		\
 				-Iplat/nuvoton/common/include		\
-				-Idrivers/nuvoton/mcr_trustzone		\
+				-Idrivers/nuvoton/common/include		\
+				-Idrivers/nuvoton/npcm845x/include		\
 
 # Include GICv3 driver files
 include drivers/arm/gic/v2/gicv2.mk
@@ -169,25 +173,18 @@ NPCM850_GIC_SOURCES	:=			${GICV2_SOURCES}
 
 BL31_SOURCES	+=lib/cpus/aarch64/cortex_a35.S \
 				plat/common/plat_psci_common.c		\
-				drivers/nuvoton/uart/nuvoton_16550_console.S	\
- 			    drivers/nuvoton/mcr_trustzone/mcr_trustzone.c		\
+				drivers/nuvoton/common/uart/nuvoton_16550_console.S	\
+ 			    drivers/nuvoton/trustzone/npcm845x_trustzone_stub.c		\
+ 			    drivers/nuvoton/trustzone/npcm845x_trustzone_stub.c		\
+				drivers/nuvoton/npcm845x/npcm845x_clock_stub.c              \
 				plat/nuvoton/npcm845x/npcm845x_psci.c		\
 				plat/nuvoton/npcm845x/npcm845x_serial_port.c \
 				plat/nuvoton/common/nuvoton_topology.c		\
-				plat/nuvoton/common/nuvoton_psci.c		
+				plat/nuvoton/npcm845x/npcm845x_bl31_setup.c		
 				
-
-#include plat/nuvoton/common/sci/sci_api.mk
-
-#include plat/arm/css/common/sp_min/css_sp_min.mk
-
-
-
-#include lib/libfdt/libfdt.mk
 
 PLAT_BL_COMMON_SOURCES	:=	drivers/delay_timer/delay_timer.c		\
 				drivers/delay_timer/generic_delay_timer.c	\
-				plat/nuvoton/npcm845x/npcm845x_bl31_setup.c		\
 				plat/common/plat_gicv2.c		\
 				plat/arm/common/arm_gicv2.c		\
 				plat/nuvoton/common/plat_nuvoton_gic.c	\
@@ -196,7 +193,6 @@ PLAT_BL_COMMON_SOURCES	:=	drivers/delay_timer/delay_timer.c		\
 				plat/nuvoton/common/nuvoton_helpers.S	\
 				lib/semihosting/semihosting.c \
 				lib/semihosting/${ARCH}/semihosting_call.S \
-				#drivers/arm/pl011/aarch64/pl011_console.S\
 				
 				
 				
@@ -207,7 +203,7 @@ PLAT_BL_COMMON_SOURCES	+=	lib/xlat_tables/xlat_tables_common.c		\
 else
 include lib/xlat_tables_v2/xlat_tables.mk
 
-#PLAT_BL_COMMON_SOURCES	+=	${XLAT_TABLES_LIB_SRCS}
+
 endif
 
 ifeq (${ENABLE_PMF}, 1)
@@ -232,7 +228,7 @@ endif
 ifeq (${EL3_EXCEPTION_HANDLING},1)
 BL31_SOURCES		+=	plat/arm/common/aarch64/arm_ehf.c
 endif
-#include plat/arm/common/arm_common.mk
+
 include plat/nuvoton/arm/arm_common.mk
 BL1_SOURCES	:=
 BL2_SOURCES	:=

@@ -1,35 +1,15 @@
 /*
- *  Copyright (c) 2017 Nuvoton Technology Corp.
+ * Copyright (C) 20122 Nuvoton Ltd.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:     BSD-3-Clause
+ * https://spdx.org/licenses
  */
+ 
+#ifndef __NPCM845x_GCR_H_
+#define __NPCM845x_GCR_H_
 
-#ifndef __NPCMX50_GCR_H_
-#define __NPCMX50_GCR_H_
 
-//#if defined (CONFIG_TARGET_ARBEL)
-#include "arbel_gcr.h"
-//#else
-//#error "no target board defined!"
-//#endif
-
-struct npcm850_gcr {
+struct npcm845x_gcr {
 	unsigned int  pdid;
 	unsigned int  pwron;
 	unsigned int  swstrps;
@@ -145,21 +125,4 @@ struct npcm850_gcr {
 	unsigned int  mfsel_clr6;
 	unsigned int  mfsel_clr7;
 	};
-
-struct npcm850_gcr_cp1 {
-	unsigned int  cpctl1;
-	unsigned int  cp2bst1;
-	unsigned int  b2cpnt1;
-	unsigned int  cppctl1;
-	unsigned int  cpbpntr1;
-	};
-	
-struct npcm850_gcr_cp2 {
-	unsigned int  cpctl2;
-	unsigned int  cp2bst2;
-	unsigned int  b2cpnt2;
-	unsigned int  rsvd1[1];
-	unsigned int  cpsp2;
-	};
-
 #endif

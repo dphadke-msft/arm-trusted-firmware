@@ -163,7 +163,7 @@ enum LCR_WLS_type
 
 #endif	/* __ASSEMBLY__ */
 
-uintptr_t npcm850_get_base_uart(UART_DEV_T dev);
+uintptr_t npcm845x_get_base_uart(UART_DEV_T dev);
 void CLK_ResetUART(void);
 int UART_Init (UART_DEV_T devNum,  UART_BAUDRATE_T baudRate);
 

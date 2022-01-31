@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
- *
+ * Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -34,6 +34,7 @@ bool npcm845x_is_wakeup_src_irqsteer(void);
 //void plat_gic_save(unsigned int proc_num, struct plat_gic_ctx *ctx);
 //void plat_gic_restore(unsigned int proc_num, struct plat_gic_ctx *ctx);
 
+void __dead2 npcm845x_pwr_down_wfi(const psci_power_state_t *target_state);
 void npcm845x_cpu_standby(plat_local_state_t cpu_state);
 int npcm845x_validate_ns_entrypoint(uintptr_t entrypoint);
 	 int npcm845x_pwr_domain_on(u_register_t mpidr);
@@ -52,5 +53,6 @@ void npcm845x_pwr_domain_suspend_finish(const psci_power_state_t *target_state);
 	void npcm845x_pwr_domain_suspend(const psci_power_state_t *target_state);
 void npcm845x_pwr_domain_off(const psci_power_state_t *target_state);
 
+void __init npcm845x_bl31_plat_arch_setup(void);
 
 #endif /* PLAT_NPCM845X_H */

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
- *
+ * Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #ifndef NPCM845x_ARM_DEF_H
@@ -17,8 +17,10 @@
 #include <plat/common/common_def.h>
 
 
-
-
+// This flag will add zones to the MMU so that it will be possible to debug
+//#define ALLOW_DEBUG_MMU
+//#undef  ALLOW_DEBUG_MMU
+#undef CONFIG_TARGET_ARBEL_PALLADIUM
 /******************************************************************************
  * Definitions common to all ARM standard platforms
  *****************************************************************************/
@@ -56,12 +58,14 @@
  */
  
 #define NPCM845x_PLAT_PRIMARY_CPU		U(0x0)
-#define NPCM845x_MAX_CPU_PER_CLUSTER	U(4)
 #define NPCM845x_CLUSTER_COUNT		U(1)
 #ifdef SECONDARY_BRINGUP
+#define NPCM845x_MAX_CPU_PER_CLUSTER	U(2)
 #define NPCM845x_PLATFORM_CORE_COUNT	U(2)
 #define NPCM845x_PLATFORM_CLUSTER0_CORE_COUNT	U(2)
+
 #else
+#define NPCM845x_MAX_CPU_PER_CLUSTER	U(4)
 #define NPCM845x_PLATFORM_CORE_COUNT	U(4)
 #define NPCM845x_PLATFORM_CLUSTER0_CORE_COUNT	U(4)
 #endif
@@ -69,6 +73,10 @@
 
 #define NPCM845x_SYSTEM_COUNT					U(0)
 
+
+// Memory mapping for NPCM845x
+#define NPCM845x_REG_BASE			0xf0000000
+#define NPCM845x_REG_SIZE			0x0ff16000
 
 /* Memory location options for TSP */
 #define ARM_TRUSTED_SRAM_ID		0
@@ -107,7 +115,7 @@
 
 //Hila: hook to run "SRAM" on "DDR" for testing 
 #define ARM_TRUSTED_SRAM_BASE		UL(0xfffd0000)
-#define ARM_SHARED_RAM_BASE			ARM_TRUSTED_SRAM_BASE
+#define ARM_SHARED_RAM_BASE			UL(0xfffEE000) // Hila: add calc ARM_TRUSTED_SRAM_BASE
 #define ARM_SHARED_RAM_SIZE			UL(0x00001000)	/* 4 KB */
 
 /* The remaining Trusted SRAM is used to load the BL images */
@@ -122,7 +130,9 @@
 
 #define ARM_DRAM1_BASE			ULL(0x00000000)
 #ifndef CONFIG_TARGET_ARBEL_PALLADIUM
-#define ARM_DRAM1_SIZE			ULL(0x40000000)
+//Although npcm845x is 4G, consider only 2G Trusted Firmware memory allocation
+ #define ARM_DRAM1_SIZE			ULL(0x40000000)
+//#define ARM_DRAM1_SIZE			ULL(0x20000000)
 #else
 #define ARM_DRAM1_SIZE			ULL(0x10000000)
 #define ARM_DRAM1_END			(ARM_DRAM1_BASE +		\
@@ -134,12 +144,19 @@
  *   - SCP TZC DRAM: If present, DRAM reserved for SCP use
  *   - AP TZC DRAM: The remaining TZC secured DRAM reserved for AP use
  */
+ 
+ // Check for redundancy 
+//#define PLAT_ARM_NS_IMAGE_BASE	0x0
+#define PLAT_ARM_SCP_TZC_DRAM1_SIZE  0x0
+
+
 #define ARM_TZC_DRAM1_SIZE		UL(0x01000000)
+#define ARM_SCP_TZC_DRAM1_SIZE		PLAT_ARM_SCP_TZC_DRAM1_SIZE
 
 #define ARM_SCP_TZC_DRAM1_BASE		(ARM_DRAM1_BASE +		\
 					 ARM_DRAM1_SIZE -		\
 					 ARM_SCP_TZC_DRAM1_SIZE)
-#define ARM_SCP_TZC_DRAM1_SIZE		PLAT_ARM_SCP_TZC_DRAM1_SIZE
+
 #define ARM_SCP_TZC_DRAM1_END		(ARM_SCP_TZC_DRAM1_BASE +	\
 					 ARM_SCP_TZC_DRAM1_SIZE - 1U)
 
@@ -148,6 +165,8 @@
  * firmware. This region is meant to be NOLOAD and will not be zero
  * initialized. Data sections with the attribute `arm_el3_tzc_dram` will be
  * placed here.
+ 
+ NPCM845x - Currently we dont have EL3 implemenation on secured DRAM.
  */
 #define ARM_EL3_TZC_DRAM1_BASE		(ARM_SCP_TZC_DRAM1_BASE - ARM_EL3_TZC_DRAM1_SIZE)
 #define ARM_EL3_TZC_DRAM1_SIZE		UL(0x00200000) /* 2 MB */
@@ -210,18 +229,7 @@
 #define ARM_NS_DRAM1_END		(ARM_NS_DRAM1_BASE +		\
 					 ARM_NS_DRAM1_SIZE - 1U)
 
-/* Boaz */
-///#define PLAT_ARM_DRAM_BASE		NPCM845x_DRAM_BASE//ARM_DRAM1_BASE
-//#define PLAT_ARM_DRAM_SIZE		(NPCM845x_DRAM_LIMIT - NPCM845x_DRAM_BASE)//ARM_DRAM1_BASE
-/*******/
-/*
-#define ARM_DRAM2_BASE			0 //PLAT_ARM_DRAM_BASE
-#define ARM_DRAM2_SIZE			1 //PLAT_ARM_DRAM_SIZE
-#define ARM_DRAM2_END			(ARM_DRAM2_BASE + ARM_DRAM2_SIZE - 1U)
-					 ARM_DRAM2_SIZE - 1U)
-*/
-
-// Hila to check
+// We are not using DRAM2 but it has to have a value for calculation
 #define ARM_DRAM2_BASE			0 //PLAT_ARM_DRAM_BASE
 #define ARM_DRAM2_SIZE			1 //PLAT_ARM_DRAM_SIZE
 #define ARM_DRAM2_END			(ARM_DRAM2_BASE + ARM_DRAM2_SIZE - 1U)
@@ -269,11 +277,34 @@
 						ARM_SHARED_RAM_BASE,	\
 						ARM_SHARED_RAM_SIZE,	\
 						MT_DEVICE | MT_RW | MT_SECURE)
+	
+	
+						
+#ifdef ALLOW_DEBUG_MMU
 
+// In order to be able to debug, we need to add BL33 and BL32 to MMU as well.
 #define ARM_MAP_NS_DRAM1		MAP_REGION_FLAT(		\
 						ARM_NS_DRAM1_BASE,	\
 						ARM_NS_DRAM1_SIZE,	\
 						MT_MEMORY | MT_RW | MT_NS)
+						
+
+#define ARM_MAP_BL32_CORE_MEM		MAP_REGION_FLAT(		\
+						BL32_BASE,		\
+						BL32_LIMIT - BL32_BASE,	\
+						MT_MEMORY | MT_RW | MT_SECURE)
+						
+						
+#define ARM_MAP_SEC_BB_MEM		MAP_REGION_FLAT(		\
+						0xFFFB0000,	\
+						0x20000,	\
+						MT_MEMORY | MT_RW | MT_NS)						
+						
+/*
+*/
+
+#endif
+
 
 #define ARM_MAP_DRAM2			MAP_REGION_FLAT(		\
 						ARM_DRAM2_BASE,		\
@@ -292,6 +323,7 @@
 						MT_MEMORY | MT_RW | MT_SECURE)
 #endif
 
+// NPCM845x - Currently we dont have EL3 implemenation on secured DRAM.
 #define ARM_MAP_EL3_TZC_DRAM		MAP_REGION_FLAT(			\
 						ARM_EL3_TZC_DRAM1_BASE,	\
 						ARM_EL3_TZC_DRAM1_SIZE,	\
@@ -314,7 +346,7 @@
 #define ARM_MAP_BL1_RW		MAP_REGION_FLAT(	\
 					BL1_RW_BASE,	\
 					BL1_RW_LIMIT - BL1_RW_BASE, \
-					MT_MEMORY | MT_RW | MT_SECURE)
+					MT_MEMORY | MT_RW | EL3_PAS)
 
 /*
  * If SEPARATE_CODE_AND_RODATA=1 we define a region for each section
@@ -324,24 +356,24 @@
 #define ARM_MAP_BL_RO			MAP_REGION_FLAT(			\
 						BL_CODE_BASE,			\
 						BL_CODE_END - BL_CODE_BASE,	\
-						MT_CODE | MT_SECURE),		\
+						MT_CODE | EL3_PAS),		\
 					MAP_REGION_FLAT(			\
 						BL_RO_DATA_BASE,		\
 						BL_RO_DATA_END			\
 							- BL_RO_DATA_BASE,	\
-						MT_RO_DATA | MT_SECURE)
+						MT_RO_DATA | EL3_PAS)
 #else
 #define ARM_MAP_BL_RO			MAP_REGION_FLAT(			\
 						BL_CODE_BASE,			\
 						BL_CODE_END - BL_CODE_BASE,	\
-						MT_CODE | MT_SECURE)
+						MT_CODE | EL3_PAS)
 #endif
 #if USE_COHERENT_MEM
 #define ARM_MAP_BL_COHERENT_RAM		MAP_REGION_FLAT(			\
 						BL_COHERENT_RAM_BASE,		\
 						BL_COHERENT_RAM_END		\
 							- BL_COHERENT_RAM_BASE, \
-						MT_DEVICE | MT_RW | MT_SECURE)
+						MT_DEVICE | MT_RW | EL3_PAS)
 #endif
 #if USE_ROMLIB
 #define ARM_MAP_ROMLIB_CODE		MAP_REGION_FLAT(			\
@@ -382,13 +414,6 @@
 /* Memory mapped Generic timer interfaces  */
 
 #define ARM_SYS_CNTCTL_BASE			UL(0XF07FC000)
-//#define ARM_SYS_CNTCTL_BASE		UL(0x2a430000) 
-//#define ARM_SYS_CNTCTL_BASE		UL(0XF07FC000)
-//#define ARM_SYS_TIMCTL_BASE		UL(0XF07FC000)
-//#define ARM_SYS_CNTREAD_BASE		UL(0x2a800000)
-//#define ARM_SYS_TIMCTL_BASE		UL(0x2a810000)
-//#define ARM_SYS_CNT_BASE_S		UL(0x2a820000)
-//#define ARM_SYS_CNT_BASE_NS		UL(0x2a830000)
 
 #define ARM_CONSOLE_BAUDRATE		115200
 
@@ -542,6 +567,7 @@
  * SP_MIN is the only BL image in SRAM. Allocate the whole of SRAM (excluding
  * the page reserved for fw_configs) to BL32
  */
+NOT Compile!
 #  define BL32_BASE			ARM_FW_CONFIGS_LIMIT
 #  define BL32_LIMIT			(ARM_BL_RAM_BASE + ARM_BL_RAM_SIZE)
 # else
@@ -553,6 +579,7 @@
 # endif /* RESET_TO_SP_MIN */
 
 #else
+
 /*******************************************************************************
  * BL32 specific defines for EL3 runtime in AArch64 mode
  ******************************************************************************/
@@ -562,18 +589,21 @@
  * controller.
  */
 # if SPM_MM
+Not Compiled D
 #  define TSP_SEC_MEM_BASE		(ARM_AP_TZC_DRAM1_BASE + ULL(0x200000))
 #  define TSP_SEC_MEM_SIZE		(ARM_AP_TZC_DRAM1_SIZE - ULL(0x200000))
 #  define BL32_BASE			(ARM_AP_TZC_DRAM1_BASE + ULL(0x200000))
 #  define BL32_LIMIT			(ARM_AP_TZC_DRAM1_BASE +	\
 						ARM_AP_TZC_DRAM1_SIZE)
 # elif defined(SPD_spmd)
+Not Compiled E
 #  define TSP_SEC_MEM_BASE		(ARM_AP_TZC_DRAM1_BASE + ULL(0x200000))
 #  define TSP_SEC_MEM_SIZE		(ARM_AP_TZC_DRAM1_SIZE - ULL(0x200000))
 #  define BL32_BASE			PLAT_ARM_TRUSTED_DRAM_BASE
 #  define BL32_LIMIT			(PLAT_ARM_TRUSTED_DRAM_BASE	\
 						+ (UL(1) << 21))
 # elif ARM_BL31_IN_DRAM
+Not Compiled C
 #  define TSP_SEC_MEM_BASE		(ARM_AP_TZC_DRAM1_BASE +	\
 						PLAT_ARM_MAX_BL31_SIZE)
 #  define TSP_SEC_MEM_SIZE		(ARM_AP_TZC_DRAM1_SIZE -	\
@@ -583,12 +613,14 @@
 #  define BL32_LIMIT			(ARM_AP_TZC_DRAM1_BASE +	\
 						ARM_AP_TZC_DRAM1_SIZE)
 # elif ARM_TSP_RAM_LOCATION_ID == ARM_TRUSTED_SRAM_ID
+NOT Compile
 #  define TSP_SEC_MEM_BASE		ARM_BL_RAM_BASE
 #  define TSP_SEC_MEM_SIZE		ARM_BL_RAM_SIZE
 #  define TSP_PROGBITS_LIMIT		BL31_BASE
 #  define BL32_BASE			ARM_FW_CONFIGS_LIMIT
 #  define BL32_LIMIT			BL31_BASE
 # elif ARM_TSP_RAM_LOCATION_ID == ARM_TRUSTED_DRAM_ID
+NOT Compile
 #  define TSP_SEC_MEM_BASE		PLAT_ARM_TRUSTED_DRAM_BASE
 #  define TSP_SEC_MEM_SIZE		PLAT_ARM_TRUSTED_DRAM_SIZE
 #  define BL32_BASE			PLAT_ARM_TRUSTED_DRAM_BASE
@@ -611,6 +643,7 @@
  */
 #if defined(__aarch64__)
 # if defined(SPD_none) && !SPM_MM
+NOT_COMPILE!
 #  undef BL32_BASE
 # endif /* defined(SPD_none) && !SPM_MM */
 #endif /* defined(__aarch64__)  */

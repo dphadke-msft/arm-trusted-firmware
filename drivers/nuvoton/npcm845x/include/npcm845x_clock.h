@@ -32,7 +32,75 @@ enum {
 	SPI0  = 10,
 	SPI3  = 13,
 };
+struct clk_ctl {
+	unsigned int  clken1;
+	unsigned int  clksel;
+	unsigned int  clkdiv1;
+	unsigned int  pllcon0;
+	unsigned int  pllcon1;
+	unsigned int  swrstr;
+	unsigned char res1[0x8];
+	unsigned int  ipsrst1;
+	unsigned int  ipsrst2;
+	unsigned int  clken2;
+	unsigned int  clkdiv2;
+	unsigned int  clken3;
+	unsigned int  ipsrst3;
+	unsigned int  wd0rcr;
+	unsigned int  wd1rcr;
+	unsigned int  wd2rcr;
+	unsigned int  swrstc1;
+	unsigned int  swrstc2;
+	unsigned int  swrstc3;
+	unsigned int  tiprstc;
+	unsigned int  pllcon2;
+	unsigned int  clkdiv3;
+	unsigned int  corstc;
+	unsigned int  pllcong;
+	unsigned int  ahbckfi;
+	unsigned int  seccnt;
+	unsigned int  cntr25m;
+	unsigned int  clken4;
+	unsigned int  ipsrst4;
+	unsigned int  busto;
+	unsigned int  clkdiv4;
+	unsigned int  wd0rcrb;
+	unsigned int  wd1rcrb;
+	unsigned int  wd2rcrb;
+	unsigned int  swrstc1b;
+	unsigned int  swrstc2b;
+	unsigned int  swrstc3b;
+	unsigned int  tiprstcb;
+	unsigned int  corstcb; 
+	unsigned int  ipsrstdis1;
+	unsigned int  ipsrstdis2;
+	unsigned int  ipsrstdis3;
+	unsigned int  ipsrstdis4;
+	unsigned char res2[0x10];
+	unsigned int  thrtl_cnt;
+};
 
+typedef enum arbel_reset_type
+{
+	RESET_TYPE_NULL = 0,
+	RESET_TYPE_VSB,
+	RESET_TYPE_CORE, RESET_TYPE_CORE_OFF,
+	RESET_TYPE_FSW,
+	RESET_TYPE_WD0, 
+	RESET_TYPE_WD1, 
+	RESET_TYPE_WD2, 
+	RESET_TYPE_SW1, 
+	RESET_TYPE_SW2, 
+	RESET_TYPE_SW3, 
+	RESET_TYPE_TIP_MODULE, 
+	RESET_TYPE_TIP_PORST,
+	RESET_TYPE_DBG_RESET, 
+	RESET_TYPE_PCI_RST,
+	RESET_TYPE_LAST,	
+} arbel_reset_type;
+
+
+#define CLK_BA						0xF0801000
 /* Clock Enable 1 Register (CLKEN1) */
 #define CLKEN1_TIMER0_4             19
 #define CLKEN1_TIMER5_9             20
@@ -157,5 +225,23 @@ enum {
 /* IP Software Reset Register 4 (IPSRST4), offset 0x74 */
 #define IPSRST4_USBHOST2            31
 #define IPSRST4_USBPHY3             25
+
+#define SWRSTR						(CLK_BA+0x14)
+
+
+// Full system watchdog
+
+#define FSW_BA						0xF000F000
+#define FSWCR						(FSW_BA + 0x1C)
+#define FSWCR_WDT_CNT				23
+#define FSWCR_WDTCK					10
+#define FSWCR_WTE					7
+#define FSWCR_WTIS					4
+#define FSWCR_WTRE					1
+#define FSWCR_WTR					0
+
+
+void arbel_handle_reset(arbel_reset_type reset_t);
+int arbel_clk_if_init();
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
- *
+ * Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -16,10 +16,6 @@
 #include <lib/psci/psci.h>
 
 #include <plat_npcm845x.h>
-//#include <sci/sci.h>
-
-#include <npcm845x_pads.h>
-#include <npcm845x_iomux.h>
 #include <npcm845x_lpuart.h>
 #include <npcm845x_clock.h>
 #include <npcm845x_gcr.h>
@@ -27,26 +23,26 @@
 
 
 
-uintptr_t npcm850_get_base_uart(UART_DEV_T devNum)
+uintptr_t npcm845x_get_base_uart(UART_DEV_T devNum)
 {
 	
 	return (uintptr_t)0xF0000000 + devNum * 0x1000;
 }
 
-uintptr_t npcm850_get_base_clk()
+uintptr_t npcm845x_get_base_clk()
 {
 	
 	return (uintptr_t)0xF0801000;
 }
 
-uintptr_t npcm850_get_base_gcr()
+uintptr_t npcm845x_get_base_gcr()
 {
 	
 	return (uintptr_t)0xF0800000;
 }
-void npcm850_wait_for_empty(int uart_n)
+void npcm845x_wait_for_empty(int uart_n)
 	{
-		volatile struct npcmX50_uart *uart = ( struct npcmX50_uart *)(uintptr_t)npcm850_get_base_uart(uart_n);
+		volatile struct npcmX50_uart *uart = ( struct npcmX50_uart *)(uintptr_t)npcm845x_get_base_uart(uart_n);
 		
 		//volatile uint32_t temp = &uart->lsr;
 		
@@ -65,14 +61,14 @@ void npcm850_wait_for_empty(int uart_n)
 int UART_Init (UART_DEV_T devNum,  UART_BAUDRATE_T baudRate)
 {
 	uint32_t val = 0;
-	uint32_t clk_base = npcm850_get_base_clk();
-	uint32_t gcr_base =  npcm850_get_base_gcr();
-	uint32_t uart_base = npcm850_get_base_uart(devNum);
+	uint32_t clk_base = npcm845x_get_base_clk();
+	uint32_t gcr_base =  npcm845x_get_base_gcr();
+	uint32_t uart_base = npcm845x_get_base_uart(devNum);
 	volatile struct npcmX50_uart *uart =  (struct npcmX50_uart *)(uintptr_t)uart_base;
 	// Use  CLKREF to be idependant of CPU frequency
 	
 	volatile struct clk_ctl *clk_ctl_obj = ( struct clk_ctl *)(uintptr_t)clk_base;
-	volatile struct npcm850_gcr *gcr_ctl_obj = (struct npcm850_gcr *)(uintptr_t)gcr_base;
+	volatile struct npcm845x_gcr *gcr_ctl_obj = (struct npcm845x_gcr *)(uintptr_t)gcr_base;
 	// Clear bits 8/9
 	//mmio_write_32(clk_ctl_obj->clksel,(mmio_read_32(clk_ctl_obj->clksel) & ~((uint32_t)0x3<<8)));
 	clk_ctl_obj->clksel = clk_ctl_obj->clksel & ~((uint32_t)0x3<<8);
@@ -90,7 +86,7 @@ int UART_Init (UART_DEV_T devNum,  UART_BAUDRATE_T baudRate)
 	}
 	
 		
-	npcm850_wait_for_empty(devNum);
+	npcm845x_wait_for_empty(devNum);
 	
 		
 	val = LCR_WLS_8bit;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2019, ARM Limited and Contributors. All rights reserved.
- *
+ * Copyright (c) 2017 Nuvoton Technology Corp.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -31,9 +31,9 @@ void tsp_early_platform_setup(void)
 	// USe the same console to print data from TSP 
 	/* Register UART w/o initialization - A clock rate of zero means to skip the initialisation.  */
 #ifdef CONFIG_TARGET_ARBEL_PALLADIUM
-	UART_BASE_ADDR = npcm850_get_base_uart(UART0_DEV);
+	UART_BASE_ADDR = npcm845x_get_base_uart(UART0_DEV);
 #else
-	UART_BASE_ADDR = npcm850_get_base_uart(UART3_DEV);
+	UART_BASE_ADDR = npcm845x_get_base_uart(UART3_DEV);
 #endif
 	nuvoton_console_16550_register(UART_BASE_ADDR, 0, 0, &console);
 }

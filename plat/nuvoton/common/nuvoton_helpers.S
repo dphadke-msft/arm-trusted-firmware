@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
- *
+ * Copyright (C) 20122 Nuvoton Ltd.
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -101,11 +101,37 @@ endfunc plat_calc_core_pos
 	 * function to get the entrypoint.
 	 * ---------------------------------------------
 	 */
+/* ---------------------------------------------------------------------
+	 * uintptr_t plat_get_my_entrypoint (void);
+	 *
+	 * Main job of this routine is to distinguish between a cold and a warm
+	 * boot.
+	 *
+	 * This functions returns:
+	 *  - 0 for a cold boot.
+	 *  - Any other value for a warm boot.
+	 * ---------------------------------------------------------------------
+	 */
 func plat_get_my_entrypoint
-	adrp	x1, mailbox_base
-	ldr	x0, [x1, :lo12:mailbox_base]
-	ret
-endfunc	plat_get_my_entrypoint
+	mov	x1, x30
+	bl	plat_is_my_cpu_primary
+	/*
+	 * Secondaries always cold boot.
+	*/
+	cbz	w0, 1f
+	/*
+	 * Primaries warm boot if they are requested
+	 * to power off.
+	 */
+	mov_imm	x0, PLAT_NPCM_TM_HOLD_BASE
+	ldr	x0, [x0]
+	cmp	x0, PLAT_NPCM_TM_HOLD_STATE_BSP_OFF
+	adr	x0, plat_wait_for_warm_boot
+	csel	x0, x0, xzr, eq
+	ret	x1
+1:	mov	x0, #0
+	ret	x1
+endfunc plat_get_my_entrypoint
 
 func npcm845x_mailbox_init
 	adrp	x1, mailbox_base
@@ -113,8 +139,38 @@ func npcm845x_mailbox_init
 	ret
 endfunc npcm845x_mailbox_init
 
+func plat_wait_for_warm_boot
+	/*
+	 * Calculate address of our hold entry.
+	 * As the function will never return, there is no need to save LR.
+	 */
+	bl	plat_my_core_pos
+	lsl	x0, x0, #3
+	mov_imm	x2, PLAT_NPCM_TM_HOLD_BASE
+	add	x0, x0, x2
+	/*
+	 * This code runs way before requesting the warmboot of this core,
+	 * so it is possible to clear the mailbox before getting a request
+	 * to boot.
+	 */
+	mov	x1, PLAT_NPCM_TM_HOLD_STATE_WAIT
+	str	x1,[x0]
+
+	/* Wait until we have a go */
+poll_mailbox:
+	wfe
+	ldr	x1, [x0]
+	cmp	x1, PLAT_NPCM_TM_HOLD_STATE_GO
+	bne	poll_mailbox
+
+	/* Jump to the provided entrypoint */
+	mov_imm	x0, PLAT_NPCM_TM_ENTRYPOINT
+	ldr	x1, [x0]
+	br	x1
+endfunc plat_wait_for_warm_boot
+
 func plat_secondary_cold_boot_setup
-	b	.
+	b	plat_wait_for_warm_boot
 endfunc plat_secondary_cold_boot_setup
 
 func plat_crash_console_init
