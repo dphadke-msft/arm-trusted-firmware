@@ -91,11 +91,11 @@ static const unsigned int npcm845x_pm_idle_states[] = {
 	 * secure DRAM.
 	 */
 	NOTICE("%s() nuvoton_psci\n", __func__);
-	
+#ifdef PLAT_ARM_TRUSTED_DRAM_BASE
 	if ((entrypoint >= PLAT_ARM_TRUSTED_DRAM_BASE) &&
 	    (entrypoint < (PLAT_ARM_TRUSTED_DRAM_BASE + PLAT_ARM_TRUSTED_DRAM_SIZE)))
 		return PSCI_E_INVALID_ADDRESS ;
-		
+#endif		
 			// For TFTS purposes, '0' is also illegal 
 	#ifdef SPD_tspd
 	

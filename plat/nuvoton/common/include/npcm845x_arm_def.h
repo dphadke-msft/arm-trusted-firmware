@@ -643,7 +643,7 @@ NOT Compile
  */
 #if defined(__aarch64__)
 # if defined(SPD_none) && !SPM_MM
-NOT_COMPILE!
+// NOT_COMPILE! - compiled when no BL2 
 #  undef BL32_BASE
 # endif /* defined(SPD_none) && !SPM_MM */
 #endif /* defined(__aarch64__)  */
