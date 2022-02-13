@@ -114,8 +114,9 @@
 /* The first 4KB of Trusted SRAM are used as shared memory */
 
 //Hila: hook to run "SRAM" on "DDR" for testing 
-#define ARM_TRUSTED_SRAM_BASE		UL(0xfffd0000)
-#define ARM_SHARED_RAM_BASE			UL(0xfffEE000) // Hila: add calc ARM_TRUSTED_SRAM_BASE
+//#define ARM_TRUSTED_SRAM_BASE		UL(0xfffb0000)
+#if 0
+#define ARM_SHARED_RAM_BASE			UL(0xfffCE000) // Hila: add calc ARM_TRUSTED_SRAM_BASE
 #define ARM_SHARED_RAM_SIZE			UL(0x00001000)	/* 4 KB */
 
 /* The remaining Trusted SRAM is used to load the BL images */
@@ -127,11 +128,11 @@
 #define ARM_BL_RAM_SIZE			(PLAT_ARM_TRUSTED_SRAM_SIZE -	\
 					 ARM_SHARED_RAM_SIZE)
 
-
+#endif 
 #define ARM_DRAM1_BASE			ULL(0x00000000)
 #ifndef CONFIG_TARGET_ARBEL_PALLADIUM
 //Although npcm845x is 4G, consider only 2G Trusted Firmware memory allocation
- #define ARM_DRAM1_SIZE			ULL(0x40000000)
+ #define ARM_DRAM1_SIZE			ULL(0x31000000)
 //#define ARM_DRAM1_SIZE			ULL(0x20000000)
 #else
 #define ARM_DRAM1_SIZE			ULL(0x10000000)
@@ -288,18 +289,20 @@
 						ARM_NS_DRAM1_SIZE,	\
 						MT_MEMORY | MT_RW | MT_NS)
 						
-
+#ifdef BL32_BASE
 #define ARM_MAP_BL32_CORE_MEM		MAP_REGION_FLAT(		\
 						BL32_BASE,		\
 						BL32_LIMIT - BL32_BASE,	\
 						MT_MEMORY | MT_RW | MT_SECURE)
 						
+#endif 		
 						
+#if 0				
 #define ARM_MAP_SEC_BB_MEM		MAP_REGION_FLAT(		\
 						0xFFFB0000,	\
 						0x20000,	\
 						MT_MEMORY | MT_RW | MT_NS)						
-						
+#endif						
 /*
 */
 
@@ -540,7 +543,12 @@
  * Since this is PIE, we can define BL31_BASE to 0x0 since this macro is solely
  * used for building BL31 and not used for loading BL31.
  */
-#  define BL31_BASE				0xfffD0000//0x0
+ #define NEW_SRAM_ALLOCATION
+ #ifdef NEW_SRAM_ALLOCATION
+	#define BL31_BASE				0xfffB0000//0x0
+#else
+	#define BL31_BASE				0xfffD0000//0x0
+#endif
 #  define BL31_LIMIT			BL2_BASE//PLAT_ARM_MAX_BL31_SIZE
 #else
 /* Put BL31 below BL2 in the Trusted SRAM.*/

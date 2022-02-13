@@ -402,6 +402,7 @@ Hila: Not compiled
 		ARM_MAP_SHARED_RAM,
 #ifdef SECONDARY_BRINGUP
 		ARM_MAP_NS_DRAM1,
+	#ifdef BL32_BASE
 		ARM_MAP_BL32_CORE_MEM
 #endif
 		{0}

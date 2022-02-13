@@ -146,8 +146,11 @@ func plat_wait_for_warm_boot
 	 */
 	bl	plat_my_core_pos
 	lsl	x0, x0, #3
+	mov x8, x0
 	mov_imm	x2, PLAT_NPCM_TM_HOLD_BASE
 	add	x0, x0, x2
+	mov_imm	x2, PLAT_NPCM_TRUSTED_NOTIFICATION_BASE
+	add	x8, x8, x2
 	/*
 	 * This code runs way before requesting the warmboot of this core,
 	 * so it is possible to clear the mailbox before getting a request
@@ -156,6 +159,16 @@ func plat_wait_for_warm_boot
 	mov	x1, PLAT_NPCM_TM_HOLD_STATE_WAIT
 	str	x1,[x0]
 
+	/* Notify that core is in pending state - do not use x0!, uses x7 and x8! */
+	mov	x7, PLAT_NPCM_TM_NOTIFICATION_START
+	str	x7,[x8]
+	/*
+	 * This code runs way before requesting the warmboot of this core,
+	 * so it is possible to clear the mailbox before getting a request
+	 * to boot.
+	 */
+	mov	x1, PLAT_NPCM_TM_HOLD_STATE_WAIT
+	str	x1,[x0]
 	/* Wait until we have a go */
 poll_mailbox:
 	wfe
@@ -163,6 +176,8 @@ poll_mailbox:
 	cmp	x1, PLAT_NPCM_TM_HOLD_STATE_GO
 	bne	poll_mailbox
 
+	mov	x7, PLAT_NPCM_TM_NOTIFICATION_BR
+	str	x7,[x8]
 	/* Jump to the provided entrypoint */
 	mov_imm	x0, PLAT_NPCM_TM_ENTRYPOINT
 	ldr	x1, [x0]
