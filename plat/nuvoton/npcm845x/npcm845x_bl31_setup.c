@@ -404,6 +404,7 @@ Hila: Not compiled
 		ARM_MAP_NS_DRAM1,
 	#ifdef BL32_BASE
 		ARM_MAP_BL32_CORE_MEM
+	#endif
 #endif
 #endif
 		{0}
