@@ -161,7 +161,8 @@
 
 
 
-#define COUNTER_FREQUENCY		0x07735940		//f/4 = 125MHz
+//#define COUNTER_FREQUENCY		0x07735940		//f/4 = 125MHz
+#define COUNTER_FREQUENCY		0x0EE6B280		//f/2 = 250MHz
 #define PLAT_ARM_NSTIMER_FRAME_ID		U(1)
 
 // GIC parameters

@@ -405,6 +405,7 @@ Hila: Not compiled
 	#ifdef BL32_BASE
 		ARM_MAP_BL32_CORE_MEM
 #endif
+#endif
 		{0}
 	};
 	setup_page_tables(bl_regions, plat_arm_get_mmap());
