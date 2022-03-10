@@ -545,7 +545,7 @@
  */
  #define NEW_SRAM_ALLOCATION
  #ifdef NEW_SRAM_ALLOCATION
-	#define BL31_BASE				0xfffB0000//0x0
+	#define BL31_BASE				0xfffB1000//0x0
 #else
 	#define BL31_BASE				0xfffD0000//0x0
 #endif
