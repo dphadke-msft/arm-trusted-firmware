@@ -261,11 +261,13 @@ void __dead2 npcm845x_system_reset(void)
 
 	dsbsy();
 	isb();
-	// In future - support all reset types. For now, SW1 reset
-    arbel_handle_reset(RESET_TYPE_SW1);
-	for (;;) {
-		wfi();
-	}
+
+	/*
+	 * In future - support all reset types. For now, SW1 reset
+	 * Enable software reset 1 to reboot the BMC
+	 */ 
+	mmio_write_32(SWRSTR, SWRSTR_SWRST1);
+	while (1);
 }
 
 int npcm845x_validate_power_state(unsigned int power_state,

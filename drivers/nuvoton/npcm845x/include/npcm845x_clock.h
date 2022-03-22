@@ -228,6 +228,10 @@ typedef enum arbel_reset_type
 
 #define SWRSTR						(CLK_BA+0x14)
 
+/* SWRSTR (Software Reset Register) */
+#define SWRSTR_SWRST1		0x08
+#define SWRSTR_SWRST2		0x10
+#define SWRSTR_SWRST3		0x20
 
 // Full system watchdog
 
