@@ -132,7 +132,7 @@
 #define ARM_DRAM1_BASE			ULL(0x00000000)
 #ifndef CONFIG_TARGET_ARBEL_PALLADIUM
 //Although npcm845x is 4G, consider only 2G Trusted Firmware memory allocation
- #define ARM_DRAM1_SIZE			ULL(0x31000000)
+ #define ARM_DRAM1_SIZE			ULL(0x37000000)
 //#define ARM_DRAM1_SIZE			ULL(0x20000000)
 #else
 #define ARM_DRAM1_SIZE			ULL(0x10000000)
