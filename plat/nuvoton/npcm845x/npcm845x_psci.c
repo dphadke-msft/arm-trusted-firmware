@@ -256,6 +256,7 @@ void npcm845x_pwr_domain_suspend_finish(const psci_power_state_t *target_state)
 
 void __dead2 npcm845x_system_reset(void)
 {
+	unsigned long RESET_BASE_ADDR;
 	NOTICE("%s() nuvoton_psci\n", __func__);
 	console_flush();
 
@@ -266,7 +267,14 @@ void __dead2 npcm845x_system_reset(void)
 	 * In future - support all reset types. For now, SW1 reset
 	 * Enable software reset 1 to reboot the BMC
 	 */ 
-	mmio_write_32(SWRSTR, SWRSTR_SWRST1);
+	RESET_BASE_ADDR = (uintptr_t)0xF0801000;
+	/* Setting SW control register */
+	mmio_write_32(RESET_BASE_ADDR + 0x44, 0xFBFFFFDF);
+	/* Set SW reset */
+	mmio_write_32(RESET_BASE_ADDR + 0x14, 0x8);
+	dsb();
+
+
 	while (1);
 }
 
