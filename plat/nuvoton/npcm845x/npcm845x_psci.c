@@ -219,8 +219,8 @@ void npcm845x_pwr_domain_on_finish(const psci_power_state_t *target_state)
 		INFO("%s: target_state->pwr_domain_state[%lu]=%x\n",
 			__func__, i, target_state->pwr_domain_state[i]);
 			
-		assert(target_state->pwr_domain_state[MPIDR_AFFLVL0] ==
-					PLAT_LOCAL_STATE_OFF);
+	assert(target_state->pwr_domain_state[MPIDR_AFFLVL0] ==
+			PLAT_LOCAL_STATE_OFF);
 
 
 	gicv2_pcpu_distif_init();
@@ -244,8 +244,8 @@ void npcm845x_pwr_domain_suspend_finish(const psci_power_state_t *target_state)
 			__func__, i, target_state->pwr_domain_state[i]);
 			
 			
-		assert(target_state->pwr_domain_state[MPIDR_AFFLVL0] ==
-					PLAT_LOCAL_STATE_OFF);
+	assert(target_state->pwr_domain_state[MPIDR_AFFLVL0] ==
+			PLAT_LOCAL_STATE_OFF);
 
 
 	gicv2_pcpu_distif_init();
