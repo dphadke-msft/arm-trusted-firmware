@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Arm Limited. All rights reserved.
+ * Copyright (c) 2021-2022, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <drivers/measured_boot/event_log/event_log.h>
+#include <drivers/measured_boot/rss/rss_measured_boot.h>
 #include <tools_share/tbbr_oid.h>
 #include <fvp_critical_data.h>
 
@@ -28,10 +29,43 @@ const event_log_metadata_t fvp_event_log_metadata[] = {
 	{ SCP_BL2_IMAGE_ID, EVLOG_SCP_BL2_STRING, PCR_0 },
 	{ SOC_FW_CONFIG_ID, EVLOG_SOC_FW_CONFIG_STRING, PCR_0 },
 	{ TOS_FW_CONFIG_ID, EVLOG_TOS_FW_CONFIG_STRING, PCR_0 },
+	{ RMM_IMAGE_ID, EVLOG_RMM_STRING, PCR_0},
 
 	{ CRITICAL_DATA_ID, EVLOG_CRITICAL_DATA_STRING, PCR_1 },
 
 	{ EVLOG_INVALID_ID, NULL, (unsigned int)(-1) }	/* Terminator */
+};
+
+/* FVP table with platform specific image IDs and metadata. Intentionally not a
+ * const struct, some members might set by bootloaders during trusted boot.
+ */
+struct rss_mboot_metadata fvp_rss_mboot_metadata[] = {
+	{
+		.id = BL31_IMAGE_ID,
+		.slot = U(9),
+		.signer_id_size = SIGNER_ID_MIN_SIZE,
+		.sw_type = RSS_MBOOT_BL31_STRING,
+		.lock_measurement = true },
+	{
+		.id = HW_CONFIG_ID,
+		.slot = U(10),
+		.signer_id_size = SIGNER_ID_MIN_SIZE,
+		.sw_type = RSS_MBOOT_HW_CONFIG_STRING,
+		.lock_measurement = true },
+	{
+		.id = SOC_FW_CONFIG_ID,
+		.slot = U(11),
+		.signer_id_size = SIGNER_ID_MIN_SIZE,
+		.sw_type = RSS_MBOOT_SOC_FW_CONFIG_STRING,
+		.lock_measurement = true },
+	{
+		.id = RMM_IMAGE_ID,
+		.slot = U(12),
+		.signer_id_size = SIGNER_ID_MIN_SIZE,
+		.sw_type = RSS_MBOOT_RMM_STRING,
+		.lock_measurement = true },
+	{
+		.id = RSS_MBOOT_INVALID_ID }
 };
 
 void bl2_plat_mboot_init(void)
@@ -63,6 +97,8 @@ void bl2_plat_mboot_init(void)
 				       PLAT_ARM_EVENT_LOG_MAX_SIZE);
 
 	event_log_init((uint8_t *)event_log_start, event_log_finish);
+
+	rss_measured_boot_init();
 }
 
 int plat_mboot_measure_critical_data(unsigned int critical_data_id,
@@ -87,6 +123,7 @@ int plat_mboot_measure_critical_data(unsigned int critical_data_id,
 	return 0;
 }
 
+#if TRUSTED_BOARD_BOOT
 static int fvp_populate_critical_data(struct fvp_critical_data *critical_data)
 {
 	char *nv_ctr_oids[MAX_NV_CTR_IDS] = {
@@ -104,17 +141,26 @@ static int fvp_populate_critical_data(struct fvp_critical_data *critical_data)
 
 	return 0;
 }
+#endif /* TRUSTED_BOARD_BOOT */
 
 static int fvp_populate_and_measure_critical_data(void)
 {
+	int rc = 0;
+
+/*
+ * FVP platform only measures 'platform NV-counter' and hence its
+ * measurement makes sense during Trusted-Boot flow only.
+ */
+#if TRUSTED_BOARD_BOOT
 	struct fvp_critical_data populate_critical_data;
 
-	int rc = fvp_populate_critical_data(&populate_critical_data);
+	rc = fvp_populate_critical_data(&populate_critical_data);
 	if (rc == 0) {
 		rc = plat_mboot_measure_critical_data(CRITICAL_DATA_ID,
 						&populate_critical_data,
 						sizeof(populate_critical_data));
 	}
+#endif /* TRUSTED_BOARD_BOOT */
 
 	return rc;
 }

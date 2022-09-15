@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2018-2022, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -21,6 +21,7 @@ uint16_t stm32mp_get_boot_itf_selected(void);
 
 bool stm32mp_is_single_core(void);
 bool stm32mp_is_closed_device(void);
+bool stm32mp_is_auth_supported(void);
 
 /* Return the base address of the DDR controller */
 uintptr_t stm32mp_ddrctrl_base(void);
@@ -36,6 +37,11 @@ uintptr_t stm32mp_rcc_base(void);
 
 /* Check MMU status to allow spinlock use */
 bool stm32mp_lock_available(void);
+
+int stm32_get_otp_index(const char *otp_name, uint32_t *otp_idx,
+			uint32_t *otp_len);
+int stm32_get_otp_value(const char *otp_name, uint32_t *otp_val);
+int stm32_get_otp_value_from_idx(const uint32_t otp_idx, uint32_t *otp_val);
 
 /* Get IWDG platform instance ID from peripheral IO memory base address */
 uint32_t stm32_iwdg_get_instance(uintptr_t base);
@@ -55,6 +61,14 @@ uintptr_t get_uart_address(uint32_t instance_nb);
 
 /* Setup the UART console */
 int stm32mp_uart_console_setup(void);
+
+#if STM32MP_EARLY_CONSOLE
+void stm32mp_setup_early_console(void);
+#else
+static inline void stm32mp_setup_early_console(void)
+{
+}
+#endif
 
 /*
  * Platform util functions for the GPIO driver
@@ -92,15 +106,6 @@ void stm32mp_print_cpuinfo(void);
 /* Print board information */
 void stm32mp_print_boardinfo(void);
 
-/*
- * Util for clock gating and to get clock rate for stm32 and platform drivers
- * @id: Target clock ID, ID used in clock DT bindings
- */
-bool stm32mp_clk_is_enabled(unsigned long id);
-void stm32mp_clk_enable(unsigned long id);
-void stm32mp_clk_disable(unsigned long id);
-unsigned long stm32mp_clk_get_rate(unsigned long id);
-
 /* Initialise the IO layer and register platform IO devices */
 void stm32mp_io_setup(void);
 
@@ -121,5 +126,11 @@ int stm32mp_unmap_ddr(void);
 /* Functions to save and get boot peripheral info */
 void stm32_save_boot_interface(uint32_t interface, uint32_t instance);
 void stm32_get_boot_interface(uint32_t *interface, uint32_t *instance);
+
+#if !STM32MP_USE_STM32IMAGE && PSA_FWU_SUPPORT
+void stm32mp1_fwu_set_boot_idx(void);
+uint32_t stm32_get_and_dec_fwu_trial_boot_cnt(void);
+void stm32_set_max_fwu_trial_boot_cnt(void);
+#endif /* !STM32MP_USE_STM32IMAGE && PSA_FWU_SUPPORT */
 
 #endif /* STM32MP_COMMON_H */
